@@ -1,6 +1,8 @@
 import pygame, sys, json
 
 pygame.init()
+pygame.mixer.init()
+
 
 WIDTH, HEIGHT = 1024, 768
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -11,17 +13,33 @@ WHITE = (255, 255, 255)
 SELECTED = (255, 255, 0)
 selected = 0
 options_selected = 0
+state = "main_menu"
+music_playing = False
 
-def load_config() -> dict:
-    with open('config.json', 'r') as f:
-        print(f)
+def load_file(f) -> dict:
+    with open(f, 'r') as f:
         return json.load(f)
 
-def save_config(config) -> dict:
-    with open('config.json', 'w') as f:
-        json.dump(config, f)
+def save_file(f, data) -> dict:
+    with open(f, 'w') as f:
+        json.dump(data, f)
 
-config = load_config()
+config = load_file("config.json")
+
+def should_music_be_on() -> None:
+    global config, music_playing
+    if config["music"] == "on":
+        if not music_playing:
+            pygame.mixer.music.load('music/Midnight Siege.mp3')
+            pygame.mixer.music.play(-1)
+            music_playing = True
+        pygame.mixer.music.set_volume(1.0)
+
+    else:
+        if music_playing:
+            pygame.mixer.music.set_volume(0.0)
+
+should_music_be_on()
 
 def main_menu(events) -> str:
     global selected
@@ -70,7 +88,7 @@ def options(events) -> str:
             if event.key == pygame.K_UP and options_selected > 0:
                 options_selected -= 1
 
-            elif event.key == pygame.K_DOWN and options_selected < 4:
+            elif event.key == pygame.K_DOWN and options_selected < 2:
                 options_selected += 1
 
             elif event.key == pygame.K_LEFT:
@@ -89,7 +107,8 @@ def options(events) -> str:
 
             elif event.key == pygame.K_RETURN:
                 if options_selected == 2:
-                    save_config(config)
+                    save_file("config.json", config)
+                    should_music_be_on()
                     return "main_menu"
 
     start = mainFont.render(f"lives: {config['lives']}", True, SELECTED if options_selected == 0 else WHITE)
@@ -102,8 +121,6 @@ def options(events) -> str:
     screen.blit(quitpls, (200, 370))
 
     return "options"
-
-state = "main_menu"
 
 while True:
     events = pygame.event.get()
