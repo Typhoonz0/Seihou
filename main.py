@@ -1,4 +1,4 @@
-import pygame, sys
+import pygame, sys, json
 
 pygame.init()
 
@@ -10,6 +10,18 @@ mainFont = pygame.font.Font("smash_hit/Smash Hit.ttf", size=40)
 WHITE = (255, 255, 255)
 SELECTED = (255, 255, 0)
 selected = 0
+options_selected = 0
+
+def load_config() -> dict:
+    with open('config.json', 'r') as f:
+        print(f)
+        return json.load(f)
+
+def save_config(config) -> dict:
+    with open('config.json', 'w') as f:
+        json.dump(config, f)
+
+config = load_config()
 
 def main_menu(events) -> str:
     global selected
@@ -25,6 +37,8 @@ def main_menu(events) -> str:
             elif event.key == pygame.K_RETURN:
                 if selected == 0:
                     return "game"
+                if selected == 3:
+                    return "options"
                 elif selected == 4:
                     return "quit"
 
@@ -48,6 +62,46 @@ def main_menu(events) -> str:
 
     return "main_menu"
 
+def options(events) -> str:
+    global options_selected, config
+
+    for event in events:
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP and options_selected > 0:
+                options_selected -= 1
+
+            elif event.key == pygame.K_DOWN and options_selected < 4:
+                options_selected += 1
+
+            elif event.key == pygame.K_LEFT:
+                if options_selected == 0 and config["lives"] > 1:
+                    config["lives"] -= 1
+
+                if options_selected == 1 and config["music"] != "off":
+                    config["music"] = "off"
+
+            elif event.key == pygame.K_RIGHT:
+                if options_selected == 0 and config["lives"] < 5:
+                    config["lives"] += 1
+
+                if options_selected == 1 and config["music"] != "on":
+                    config["music"] = "on"
+
+            elif event.key == pygame.K_RETURN:
+                if options_selected == 2:
+                    save_config(config)
+                    return "main_menu"
+
+    start = mainFont.render(f"lives: {config['lives']}", True, SELECTED if options_selected == 0 else WHITE)
+    screen.blit(start, (200, 300))
+
+    start = mainFont.render(f"music: {config['music']}", True, SELECTED if options_selected == 1 else WHITE)
+    screen.blit(start, (200, 340))
+
+    quitpls = mainFont.render("back", True, SELECTED if options_selected == 2 else WHITE)
+    screen.blit(quitpls, (200, 370))
+
+    return "options"
 
 state = "main_menu"
 
@@ -57,9 +111,13 @@ while True:
         if i.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+    screen.fill((0, 0, 0))  
 
     if state == "main_menu":
         state = main_menu(events)
+        
+    elif state == "options":
+        state = options(events)
     elif state == "quit":
         pygame.quit()
         sys.exit()
