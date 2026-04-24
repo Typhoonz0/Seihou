@@ -8,12 +8,14 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 titleFont = pygame.font.Font("smash_hit/Smash Hit light.ttf", 67)
 mainFont = pygame.font.Font("smash_hit/Smash Hit.ttf", 40)
+smallFont = pygame.font.Font("smash_hit/Smash Hit.ttf", 30)
 
 WHITE = (255, 255, 255)
 SELECTED = (255, 255, 0)
 
 selected = 0
 options_selected = 0
+char_selected = 0
 state = "main_menu"
 music_playing = False
 
@@ -43,6 +45,14 @@ def should_music_be_on():
 
 should_music_be_on()
 
+def kick_main():
+    for i in range(len(menu_offsets)):
+        menu_offsets[i] = -80
+
+def kick_options():
+    for i in range(len(options_menu_offsets)):
+        options_menu_offsets[i] = -80
+
 def main_menu(events, dt):
     global selected
 
@@ -56,14 +66,15 @@ def main_menu(events, dt):
                 menu_offsets[selected] = -80
             elif event.key == pygame.K_RETURN:
                 if selected == 0:
-                    return "game"
+                    return "char_select"
                 elif selected == 3:
+                    kick_options()
                     return "options"
                 elif selected == 4:
                     return "quit"
 
     for i in range(5):
-        menu_offsets[i] *= (0.001 ** dt)
+        menu_offsets[i] *= (0.0001 ** dt)
 
     screen.blit(titleFont.render("liams game", True, WHITE), (100, 100))
     screen.blit(mainFont.render("start story", True, SELECTED if selected == 0 else WHITE), (100 + menu_offsets[0], 300))
@@ -73,6 +84,56 @@ def main_menu(events, dt):
     screen.blit(mainFont.render("quit", True, SELECTED if selected == 4 else WHITE), (100 + menu_offsets[4], 420))
 
     return "main_menu"
+
+def char_select(events, dt):
+    global char_selected
+
+    CHARS = [
+        {"name": "x", "color": (255,0,255), "class": "human", "desc": "more stable"},
+        {"name": "y",  "color": (0,255,255),  "class": "youkai", "desc": "more powerful"},
+    ]
+
+    for event in events:
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                char_selected = max(0, char_selected - 1)
+            elif event.key == pygame.K_RIGHT:
+                char_selected = min(len(CHARS) - 1, char_selected + 1)
+            elif event.key == pygame.K_RETURN:
+                return "game"
+            elif event.key == pygame.K_ESCAPE:
+                return "main_menu"
+
+    box_w, box_h = 200, 300
+    box_y = (768 - box_h) // 2
+    gap = 40
+    total_w = len(CHARS) * box_w + (len(CHARS) - 1) * gap
+    start_x = (1024 - total_w) // 2
+
+    k = 0
+    while k < len(CHARS):
+        char = CHARS[k]
+        bx = start_x + k * (box_w + gap)
+        selected = char_selected == k
+
+        pygame.draw.rect(screen, (40, 40, 60), (bx, box_y, box_w, box_h), border_radius=8)
+        if selected:
+            pygame.draw.rect(screen, (255, 255, 255), (bx - 6, box_y - 6, box_w + 12, box_h + 12), width=2, border_radius=12)
+
+        cx = bx + box_w // 2
+
+        name_surf = mainFont.render(char["name"], True, WHITE)
+        screen.blit(name_surf, (cx - name_surf.get_width() // 2, box_y + 30))
+
+        class_surf = smallFont.render(char["class"], True, char["color"])
+        screen.blit(class_surf, (cx - class_surf.get_width() // 2, box_y + 65))
+
+        desc_surf = smallFont.render(char["desc"], True, (200, 200, 220))
+        screen.blit(desc_surf, (cx - desc_surf.get_width() // 2, box_y + 110))
+
+        k += 1
+
+    return "char_select"
 
 def options(events, dt):
     global options_selected, config
@@ -99,10 +160,12 @@ def options(events, dt):
                 if options_selected == 2:
                     save_file("config.json", config)
                     should_music_be_on()
+                    kick_main()
                     return "main_menu"
-
+            elif event.key == pygame.K_ESCAPE:
+                return "main_menu"
     for i in range(3):
-        options_menu_offsets[i] *= (0.001 ** dt)
+        options_menu_offsets[i] *= (0.0001 ** dt)
 
     screen.blit(mainFont.render(f"lives: {config['lives']}", True, SELECTED if options_selected == 0 else WHITE), (200 + options_menu_offsets[0], 300))
     screen.blit(mainFont.render(f"music: {config['music']}", True, SELECTED if options_selected == 1 else WHITE), (200 + options_menu_offsets[1], 340))
@@ -128,6 +191,8 @@ while True:
         state = main_menu(events, dt)
     elif state == "options":
         state = options(events, dt)
+    elif state == "char_select":
+        state = char_select(events, dt)
     elif state == "quit":
         pygame.quit()
         sys.exit()
