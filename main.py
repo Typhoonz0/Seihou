@@ -33,6 +33,10 @@ click_sound = pygame.mixer.Sound("assets/sound/mouseclick1.ogg")
 confirm_sound = pygame.mixer.Sound("assets/sound/click5.ogg") 
 back_sound = pygame.mixer.Sound("assets/sound/mouserelease1.ogg") 
 
+def play_sound_fx(sound):
+    if config["soundfx"] == "on": 
+        sound.play()
+
 def load_file(f):
     with open(f, "r") as f:
         return json.load(f)
@@ -104,7 +108,7 @@ class State:
         self.menu_offset = [0, 0, 0, 0, 0]
 
         self.option_selection = 0
-        self.option_offset = [0, 0, 0, 0, 0]
+        self.option_offset = [0, 0, 0, 0, 0, 0]
 
         self.diff_selection = 0
         self.diff_scroll = 0.0
@@ -125,21 +129,22 @@ def main_menu(events, dt):
     for event in events:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP and state.menu_selection > 0:
-                click_sound.play()
+                play_sound_fx(click_sound)
                 state.menu_selection -= 1
                 state.menu_offset[state.menu_selection] = -80
             elif event.key == pygame.K_DOWN and state.menu_selection < 4:
-                click_sound.play()
+                play_sound_fx(click_sound)
                 state.menu_selection += 1
                 state.menu_offset[state.menu_selection] = -80
             elif event.key == pygame.K_RETURN:
-                confirm_sound.play()
+                play_sound_fx(confirm_sound)
                 if state.menu_selection == 0:
                     move_menu_item(state.diff_scroll)
                     state.diff_scroll = -120
                     return "difficulty_select"
                 elif state.menu_selection == 1:
                     move_menu_item(state.option_offset)
+                    state.diff_scroll = -120
                     return "difficulty_select"
                 elif state.menu_selection == 2:
                     return "high_scores"
@@ -149,7 +154,7 @@ def main_menu(events, dt):
                 elif state.menu_selection == 4:
                     return "quit"
             elif event.key == pygame.K_ESCAPE:
-                back_sound.play()
+                play_sound_fx(back_sound)
                 if state.menu_selection != 4:
                     state.menu_selection = 4
                     state.menu_offset[4] = -80
@@ -169,13 +174,13 @@ def difficulty_select(events, dt):
     for event in events:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT and state.diff_selection > 0:
-                click_sound.play()
+                play_sound_fx(click_sound)
                 state.diff_selection -= 1
             elif event.key == pygame.K_RIGHT and state.diff_selection < len(DIFFICULTY) - 1:
-                click_sound.play()
+                play_sound_fx(click_sound)
                 state.diff_selection += 1
             elif event.key == pygame.K_RETURN:
-                confirm_sound.play()
+                play_sound_fx(confirm_sound)
                 if state.diff_selection == 0:
                     state.diff_name = "easy"
                 elif state.diff_selection == 1:
@@ -188,7 +193,7 @@ def difficulty_select(events, dt):
                 state.char_scroll = -120
                 return "char_select"
             elif event.key == pygame.K_ESCAPE:
-                back_sound.play()
+                play_sound_fx(back_sound)
                 move_menu_item(state.menu_offset)
                 return "main_menu"
 
@@ -216,15 +221,15 @@ def char_select(events, dt):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT and state.char_selection > 0:
                 state.char_selection -= 1
-                click_sound.play()
+                play_sound_fx(click_sound)
             elif event.key == pygame.K_RIGHT and state.char_selection < len(CHARS) - 1:
-                click_sound.play()
+                play_sound_fx(click_sound)
                 state.char_selection += 1
             elif event.key == pygame.K_RETURN:
-                confirm_sound.play()
+                play_sound_fx(confirm_sound)
                 return "game"
             elif event.key == pygame.K_ESCAPE:
-                back_sound.play()
+                play_sound_fx(back_sound)
                 move_menu_item(state.diff_scroll)
                 state.diff_scroll = -120
                 return "difficulty_select"
@@ -260,6 +265,7 @@ def options(events, dt):
     labels = [
         f"lives: {config['lives']}",
         f"music: {config['music']}",
+        f"soundfx: {config['soundfx']}",   
         f"fullscreen: {config['fullscreen']}",
         f"discord rpc: {config['discordrpc']}",
         "back",
@@ -268,44 +274,55 @@ def options(events, dt):
     for event in events:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP and state.option_selection > 0:
-                click_sound.play()
+                play_sound_fx(click_sound)
                 state.option_selection -= 1
                 state.option_offset[state.option_selection] = -80
-            elif event.key == pygame.K_DOWN and state.option_selection < 4:
-                click_sound.play()
+
+            elif event.key == pygame.K_DOWN and state.option_selection < 5:
+                play_sound_fx(click_sound)
                 state.option_selection += 1
                 state.option_offset[state.option_selection] = -80
+
             elif event.key == pygame.K_LEFT:
-                click_sound.play()
+                play_sound_fx(click_sound)
                 if state.option_selection == 0 and config["lives"] > 1:
                     config["lives"] -= 1
                 elif state.option_selection == 1:
                     config["music"] = "off"
+                    should_music_be_on()
                 elif state.option_selection == 2:
-                    config["fullscreen"] = False
+                    config["soundfx"] = "off"  
                 elif state.option_selection == 3:
+                    config["fullscreen"] = False
+                elif state.option_selection == 4:
                     config["discordrpc"] = False
+
             elif event.key == pygame.K_RIGHT:
-                click_sound.play()
+                play_sound_fx(click_sound)
                 if state.option_selection == 0 and config["lives"] < 5:
                     config["lives"] += 1
                 elif state.option_selection == 1:
                     config["music"] = "on"
+                    should_music_be_on()
                 elif state.option_selection == 2:
-                    config["fullscreen"] = True
+                    config["soundfx"] = "on" 
                 elif state.option_selection == 3:
+                    config["fullscreen"] = True
+                elif state.option_selection == 4:
                     config["discordrpc"] = True
+
             elif event.key == pygame.K_RETURN:
-                confirm_sound.play()
-                if state.option_selection == 4:
+                play_sound_fx(confirm_sound)
+                if state.option_selection == 5:  
                     save_file("saves/config.json", config)
                     should_music_be_on()
                     global window, screen
                     window, screen = make_window()
                     move_menu_item(state.menu_offset)
                     return "main_menu"
+
             elif event.key == pygame.K_ESCAPE:
-                back_sound.play()
+                play_sound_fx(back_sound)
                 move_menu_item(state.menu_offset)
                 return "main_menu"
 
@@ -332,7 +349,7 @@ def high_scores(events, dt):
 
     for event in events:
         if event.key == pygame.K_ESCAPE:
-            back_sound.play()
+            play_sound_fx(back_sound)
             move_menu_item(state.menu_offset)
             return "main_menu"
 

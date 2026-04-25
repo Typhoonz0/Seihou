@@ -1,1 +1,1 @@
-{"music": "on", "lives": 3, "fullscreen": false, "discordrpc": false}
+{"music": "off", "lives": 3, "fullscreen": true, "discordrpc": false, "soundfx": "off"}
