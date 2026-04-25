@@ -27,6 +27,11 @@ WINDOW_W = 1280
 
 pygame.init()
 pygame.mixer.init()
+pygame.display.set_caption("Seihou")
+
+click_sound = pygame.mixer.Sound("assets/sound/mouseclick1.ogg") 
+confirm_sound = pygame.mixer.Sound("assets/sound/click5.ogg") 
+back_sound = pygame.mixer.Sound("assets/sound/mouserelease1.ogg") 
 
 def load_file(f):
     with open(f, "r") as f:
@@ -36,7 +41,7 @@ def save_file(f, data):
     with open(f, "w") as f:
         json.dump(data, f)
 
-config = load_file("config.json")
+config = load_file("saves/config.json")
 
 if config["discordrpc"]:
     try:
@@ -56,9 +61,12 @@ def make_window():
 
 window, screen = make_window()
 
-title_font = pygame.font.Font("smash_hit/Smash Hit light.ttf", 67)
-main_font = pygame.font.Font("smash_hit/Smash Hit.ttf", 40)
-small_font = pygame.font.Font("smash_hit/Smash Hit.ttf", 30)
+title_font = pygame.font.Font("assets/fonts/smash_hit/Smash Hit light.ttf", 67)
+main_font = pygame.font.Font("assets/fonts/smash_hit/Smash Hit.ttf", 40)
+small_font = pygame.font.Font("assets/fonts/smash_hit/Smash Hit.ttf", 30)
+
+window_bg = pygame.transform.scale(pygame.image.load("assets/img/bg.jpg").convert(), (WINDOW_W, HEIGHT))
+screen_bg = pygame.transform.scale(pygame.image.load("assets/img/mainbg.jpg").convert(), (WIDTH, HEIGHT))
 
 music_playing = False
 
@@ -66,7 +74,7 @@ def should_music_be_on():
     global music_playing
     if config["music"] == "on":
         if not music_playing:
-            pygame.mixer.music.load("music/Midnight Siege.mp3")
+            pygame.mixer.music.load("assets/sound/bg/Midnight Siege.mp3")
             pygame.mixer.music.play(-1)
             music_playing = True
         pygame.mixer.music.set_volume(1.0)
@@ -100,7 +108,7 @@ class State:
 
         self.diff_selection = 0
         self.diff_scroll = 0.0
-
+        self.diff_name = "easy"
         self.char_scroll = 0.0
         self.char_offset = [0, 0]
         self.char_entered = False
@@ -117,12 +125,15 @@ def main_menu(events, dt):
     for event in events:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP and state.menu_selection > 0:
+                click_sound.play()
                 state.menu_selection -= 1
                 state.menu_offset[state.menu_selection] = -80
             elif event.key == pygame.K_DOWN and state.menu_selection < 4:
+                click_sound.play()
                 state.menu_selection += 1
                 state.menu_offset[state.menu_selection] = -80
             elif event.key == pygame.K_RETURN:
+                confirm_sound.play()
                 if state.menu_selection == 0:
                     move_menu_item(state.diff_scroll)
                     state.diff_scroll = -120
@@ -138,6 +149,7 @@ def main_menu(events, dt):
                 elif state.menu_selection == 4:
                     return "quit"
             elif event.key == pygame.K_ESCAPE:
+                back_sound.play()
                 if state.menu_selection != 4:
                     state.menu_selection = 4
                     state.menu_offset[4] = -80
@@ -146,7 +158,7 @@ def main_menu(events, dt):
 
     kick_offsets(state.menu_offset, dt)
 
-    screen.blit(title_font.render("liams game", True, WHITE), (100, 100))
+    screen.blit(title_font.render("seihou", True, WHITE), (100, 100))
     for i, label in enumerate(menu_labels):
         color = SELECTED if state.menu_selection == i else WHITE
         screen.blit(main_font.render(label, True, color), (100 + state.menu_offset[i], 300 + i * 30))
@@ -157,14 +169,26 @@ def difficulty_select(events, dt):
     for event in events:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT and state.diff_selection > 0:
+                click_sound.play()
                 state.diff_selection -= 1
             elif event.key == pygame.K_RIGHT and state.diff_selection < len(DIFFICULTY) - 1:
+                click_sound.play()
                 state.diff_selection += 1
             elif event.key == pygame.K_RETURN:
+                confirm_sound.play()
+                if state.diff_selection == 0:
+                    state.diff_name = "easy"
+                elif state.diff_selection == 1:
+                    state.diff_name = "normal"
+                elif state.diff_selection == 2:
+                    state.diff_name = "hard"
+                elif state.diff_selection == 3:
+                    state.diff_name = "extreme"
                 move_menu_item(state.char_scroll)
                 state.char_scroll = -120
                 return "char_select"
             elif event.key == pygame.K_ESCAPE:
+                back_sound.play()
                 move_menu_item(state.menu_offset)
                 return "main_menu"
 
@@ -192,12 +216,15 @@ def char_select(events, dt):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT and state.char_selection > 0:
                 state.char_selection -= 1
-
+                click_sound.play()
             elif event.key == pygame.K_RIGHT and state.char_selection < len(CHARS) - 1:
+                click_sound.play()
                 state.char_selection += 1
             elif event.key == pygame.K_RETURN:
+                confirm_sound.play()
                 return "game"
             elif event.key == pygame.K_ESCAPE:
+                back_sound.play()
                 move_menu_item(state.diff_scroll)
                 state.diff_scroll = -120
                 return "difficulty_select"
@@ -205,6 +232,7 @@ def char_select(events, dt):
     state.char_scroll += (state.char_selection * WIDTH - state.char_scroll) * (1 - pow(0.001, dt * 2))
     kick_offsets(state.char_offset, dt)
     screen.blit(title_font.render("select character", True, WHITE), (WIDTH // 4, 120))
+    screen.blit(small_font.render(f"difficulty: {state.diff_name}", True, WHITE), (WIDTH // 4, HEIGHT - 60))
 
     cy = HEIGHT // 2
 
@@ -240,12 +268,15 @@ def options(events, dt):
     for event in events:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP and state.option_selection > 0:
+                click_sound.play()
                 state.option_selection -= 1
                 state.option_offset[state.option_selection] = -80
             elif event.key == pygame.K_DOWN and state.option_selection < 4:
+                click_sound.play()
                 state.option_selection += 1
                 state.option_offset[state.option_selection] = -80
             elif event.key == pygame.K_LEFT:
+                click_sound.play()
                 if state.option_selection == 0 and config["lives"] > 1:
                     config["lives"] -= 1
                 elif state.option_selection == 1:
@@ -255,6 +286,7 @@ def options(events, dt):
                 elif state.option_selection == 3:
                     config["discordrpc"] = False
             elif event.key == pygame.K_RIGHT:
+                click_sound.play()
                 if state.option_selection == 0 and config["lives"] < 5:
                     config["lives"] += 1
                 elif state.option_selection == 1:
@@ -264,14 +296,16 @@ def options(events, dt):
                 elif state.option_selection == 3:
                     config["discordrpc"] = True
             elif event.key == pygame.K_RETURN:
+                confirm_sound.play()
                 if state.option_selection == 4:
-                    save_file("config.json", config)
+                    save_file("saves/config.json", config)
                     should_music_be_on()
                     global window, screen
                     window, screen = make_window()
                     move_menu_item(state.menu_offset)
                     return "main_menu"
             elif event.key == pygame.K_ESCAPE:
+                back_sound.play()
                 move_menu_item(state.menu_offset)
                 return "main_menu"
 
@@ -288,7 +322,7 @@ def high_scores(events, dt):
     screen.blit(title_font.render("highscores", True, WHITE), (WIDTH // 4, 120))
 
     try:
-        scores = load_file("highscores.json")
+        scores = load_file("saves/highscores.json")
         j = 0
         for k, v in enumerate(scores):
             screen.blit(small_font.render(f"{k}: {v}", True, WHITE), (WIDTH // 4, 200 + j))
@@ -298,6 +332,7 @@ def high_scores(events, dt):
 
     for event in events:
         if event.key == pygame.K_ESCAPE:
+            back_sound.play()
             move_menu_item(state.menu_offset)
             return "main_menu"
 
@@ -306,9 +341,6 @@ def high_scores(events, dt):
 def game(events, dt):
     print(config, state.diff_selection, state.char_selection)
     return "quit"
-
-window_bg = pygame.transform.scale(pygame.image.load("bg.jpg").convert(), (WINDOW_W, HEIGHT))
-screen_bg = pygame.transform.scale(pygame.image.load("mainbg.jpg").convert(), (WIDTH, HEIGHT))
 
 clock = pygame.time.Clock()
 SCREENS = {
