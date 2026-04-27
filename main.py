@@ -138,7 +138,7 @@ def play_music():
     pygame.mixer.music.set_volume(1.0)
 
 def kick_offsets(offsets, dt, speed=0.0001):
-    # this slides in things using powers
+    # this slides things out and back using powers
     # the powers make it slide in then slow down as it aproaches where its meant to be 
     for i in range(len(offsets)):
         offsets[i] *= speed ** dt
