@@ -1,0 +1,129 @@
+{
+  "character": {
+    "id": "d551d27e-0108-4ea8-bc7f-50c610c27de5",
+    "name": "pixel art, sprite, street fighter",
+    "prompt": "pixel art, sprite, street fighter",
+    "size": {
+      "width": 68,
+      "height": 68
+    },
+    "template_id": "mannequin",
+    "directions": 4,
+    "view": "low top-down",
+    "created_at": "2026-05-04T01:19:16.170464+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "west": "rotations/west.png",
+      "east": "rotations/east.png",
+      "north": "rotations/north.png"
+    },
+    "animations": {
+      "animation-7e32611c": {
+        "east-f1920d64": [
+          "animations/animation-7e32611c/east-f1920d64/frame_000.png",
+          "animations/animation-7e32611c/east-f1920d64/frame_001.png",
+          "animations/animation-7e32611c/east-f1920d64/frame_002.png",
+          "animations/animation-7e32611c/east-f1920d64/frame_003.png",
+          "animations/animation-7e32611c/east-f1920d64/frame_004.png",
+          "animations/animation-7e32611c/east-f1920d64/frame_005.png"
+        ],
+        "west": [
+          "animations/animation-7e32611c/west/frame_000.png",
+          "animations/animation-7e32611c/west/frame_001.png",
+          "animations/animation-7e32611c/west/frame_002.png",
+          "animations/animation-7e32611c/west/frame_003.png",
+          "animations/animation-7e32611c/west/frame_004.png",
+          "animations/animation-7e32611c/west/frame_005.png"
+        ],
+        "east-f97f59ca": [
+          "animations/animation-7e32611c/east-f97f59ca/frame_000.png",
+          "animations/animation-7e32611c/east-f97f59ca/frame_001.png",
+          "animations/animation-7e32611c/east-f97f59ca/frame_002.png",
+          "animations/animation-7e32611c/east-f97f59ca/frame_003.png",
+          "animations/animation-7e32611c/east-f97f59ca/frame_004.png",
+          "animations/animation-7e32611c/east-f97f59ca/frame_005.png"
+        ]
+      },
+      "Jumping-70d5fd72": {
+        "west": [
+          "animations/Jumping-70d5fd72/west/frame_000.png",
+          "animations/Jumping-70d5fd72/west/frame_001.png",
+          "animations/Jumping-70d5fd72/west/frame_002.png",
+          "animations/Jumping-70d5fd72/west/frame_003.png",
+          "animations/Jumping-70d5fd72/west/frame_004.png",
+          "animations/Jumping-70d5fd72/west/frame_005.png",
+          "animations/Jumping-70d5fd72/west/frame_006.png",
+          "animations/Jumping-70d5fd72/west/frame_007.png",
+          "animations/Jumping-70d5fd72/west/frame_008.png"
+        ],
+        "east": [
+          "animations/Jumping-70d5fd72/east/frame_000.png",
+          "animations/Jumping-70d5fd72/east/frame_001.png",
+          "animations/Jumping-70d5fd72/east/frame_002.png",
+          "animations/Jumping-70d5fd72/east/frame_003.png",
+          "animations/Jumping-70d5fd72/east/frame_004.png",
+          "animations/Jumping-70d5fd72/east/frame_005.png",
+          "animations/Jumping-70d5fd72/east/frame_006.png",
+          "animations/Jumping-70d5fd72/east/frame_007.png",
+          "animations/Jumping-70d5fd72/east/frame_008.png"
+        ]
+      },
+      "Fight_Stance_Idle-a424c2ce": {
+        "east": [
+          "animations/Fight_Stance_Idle-a424c2ce/east/frame_000.png",
+          "animations/Fight_Stance_Idle-a424c2ce/east/frame_001.png",
+          "animations/Fight_Stance_Idle-a424c2ce/east/frame_002.png",
+          "animations/Fight_Stance_Idle-a424c2ce/east/frame_003.png",
+          "animations/Fight_Stance_Idle-a424c2ce/east/frame_004.png",
+          "animations/Fight_Stance_Idle-a424c2ce/east/frame_005.png",
+          "animations/Fight_Stance_Idle-a424c2ce/east/frame_006.png",
+          "animations/Fight_Stance_Idle-a424c2ce/east/frame_007.png"
+        ],
+        "west": [
+          "animations/Fight_Stance_Idle-a424c2ce/west/frame_000.png",
+          "animations/Fight_Stance_Idle-a424c2ce/west/frame_001.png",
+          "animations/Fight_Stance_Idle-a424c2ce/west/frame_002.png",
+          "animations/Fight_Stance_Idle-a424c2ce/west/frame_003.png",
+          "animations/Fight_Stance_Idle-a424c2ce/west/frame_004.png",
+          "animations/Fight_Stance_Idle-a424c2ce/west/frame_005.png",
+          "animations/Fight_Stance_Idle-a424c2ce/west/frame_006.png",
+          "animations/Fight_Stance_Idle-a424c2ce/west/frame_007.png"
+        ]
+      },
+      "Flying_Kick-bc973a25": {
+        "east": [
+          "animations/Flying_Kick-bc973a25/east/frame_000.png",
+          "animations/Flying_Kick-bc973a25/east/frame_001.png",
+          "animations/Flying_Kick-bc973a25/east/frame_002.png",
+          "animations/Flying_Kick-bc973a25/east/frame_003.png",
+          "animations/Flying_Kick-bc973a25/east/frame_004.png",
+          "animations/Flying_Kick-bc973a25/east/frame_005.png"
+        ],
+        "west": [
+          "animations/Flying_Kick-bc973a25/west/frame_000.png",
+          "animations/Flying_Kick-bc973a25/west/frame_001.png",
+          "animations/Flying_Kick-bc973a25/west/frame_002.png",
+          "animations/Flying_Kick-bc973a25/west/frame_003.png",
+          "animations/Flying_Kick-bc973a25/west/frame_004.png",
+          "animations/Flying_Kick-bc973a25/west/frame_005.png"
+        ]
+      },
+      "Lead_Jab-936618f8": {
+        "east": [
+          "animations/Lead_Jab-936618f8/east/frame_000.png",
+          "animations/Lead_Jab-936618f8/east/frame_001.png",
+          "animations/Lead_Jab-936618f8/east/frame_002.png"
+        ],
+        "west": [
+          "animations/Lead_Jab-936618f8/west/frame_000.png",
+          "animations/Lead_Jab-936618f8/west/frame_001.png",
+          "animations/Lead_Jab-936618f8/west/frame_002.png"
+        ]
+      }
+    }
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-04T01:42:54.991918"
+}
