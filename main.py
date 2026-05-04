@@ -5,7 +5,7 @@
 //   ) ) ((____   / / //   / / ((___/ / ((___( (  
 """
 
-import pygame, sys, json, discordrpc
+import pygame, sys, json, discordrpc, os
 
 DIFFICULTY = [
     {"name": "easy", "color": (0, 255, 0), "desc": "never played a stg"},
@@ -397,30 +397,8 @@ def high_scores(events, dt):
 
     return "high_scores"
 
-
 def game(events, dt):
     state.music_state = "stage_1_1"
-    keys = pygame.key.get_pressed()
-
-    if keys[pygame.K_LEFT]:
-        player["x"] -= player["speed"] * dt
-    if keys[pygame.K_RIGHT]:
-        player["x"] += player["speed"] * dt
-    if keys[pygame.K_UP]:
-        player["y"] -= player["speed"] * dt
-    if keys[pygame.K_DOWN]:
-        player["y"] += player["speed"] * dt
-
-    player["x"] = max(10, min(game_width - 10, player["x"]))
-    player["y"] = max(10, min(HEIGHT - 10, player["y"]))
-
-    game_surface.fill((67,67,67))
-    pygame.draw.circle(game_surface, (255, 255, 255),
-                       (int(player["x"]), int(player["y"])), 10)
-
-    text = main_font.render(state.diff_name, True, (255, 255, 255))
-    screen.blit(text, (game_width + 100, 100))
-    screen.blit(game_surface, (0, 0))
 
     for event in events:
         if event.type == pygame.KEYDOWN:

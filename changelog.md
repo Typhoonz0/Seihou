@@ -4,3 +4,4 @@
 24/04 - added discord rpc and made the ui look better
 25/04 - refactored main.py completely, added endless and scoreboard mode screens, added ui selection sounds
 26/04 - added a game screen and a pause menu!
+04/05 - added some sprites and a very simple prototype
