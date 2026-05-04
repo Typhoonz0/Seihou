@@ -74,15 +74,13 @@ window_bg = pygame.transform.scale(pygame.image.load("assets/img/bg.jpg").conver
 screen_bg = pygame.transform.scale(pygame.image.load("assets/img/mainbg.jpg").convert(), (WIDTH, HEIGHT))
 
 music_playing = False
-game_width = int(WIDTH * 2 / 3)
 
 player = {
-    "x": game_width // 2,
+    "x": 67 // 2,
     "y": HEIGHT - 60,
     "speed": 300
 }
 
-game_surface = pygame.Surface((game_width, HEIGHT))
 
 MUSIC = {
     "main_menu": "Midnight Siege.mp3",
@@ -109,6 +107,7 @@ class State:
         self.char_entered = False
         self.char_selection = 0
         self.prev_state = "pause_menu" 
+        self.actual_prev_state = "main_menu"
         self.track_playing = MUSIC["main_menu"]
         self.music_state = MUSIC["main_menu"]
 
@@ -156,7 +155,7 @@ def move_menu_item(offsets, value=-80):
 
 
 def main_menu(events, dt):
-    menu_labels = ["start story", "start endless", "high scores", "options", "quit"]
+    menu_labels = ["vs com", "vs player", "high scores", "options", "quit"]
     state.music_state = "main_menu"
     
     for event in events:
@@ -173,12 +172,14 @@ def main_menu(events, dt):
                 play_sound_fx(confirm_sound)
                 if state.menu_selection == 0:
                     move_menu_item(state.diff_scroll)
+                    state.actual_prev_state = "main_menu"
                     state.diff_scroll = -120
                     return "difficulty_select"
                 elif state.menu_selection == 1:
                     move_menu_item(state.option_offset)
-                    state.diff_scroll = -120
-                    return "difficulty_select"
+                    state.char_scroll = -120
+                    state.actual_prev_state = "main_menu"
+                    return "char_select"
                 elif state.menu_selection == 2:
                     return "high_scores"
                 elif state.menu_selection == 3:
@@ -225,6 +226,7 @@ def difficulty_select(events, dt):
                     state.diff_name = "extreme"
                 move_menu_item(state.char_scroll)
                 state.char_scroll = -120
+                state.actual_prev_state = "difficulty_select"
                 return "char_select"
             elif event.key == pygame.K_ESCAPE:
                 play_sound_fx(back_sound)
@@ -266,7 +268,7 @@ def char_select(events, dt):
                 play_sound_fx(back_sound)
                 move_menu_item(state.diff_scroll)
                 state.diff_scroll = -120
-                return "difficulty_select"
+                return state.actual_prev_state
 
     state.char_scroll += (state.char_selection * WIDTH - state.char_scroll) * (1 - pow(0.001, dt * 2))
     kick_offsets(state.char_offset, dt)
@@ -350,23 +352,24 @@ def options(events, dt):
                     global window, screen
                     window, screen = make_window()
                     move_menu_item(state.menu_offset)
+                    state.menu_selection = 0
                     return state.prev_state
             elif event.key == pygame.K_ESCAPE:
                 play_sound_fx(back_sound)
                 move_menu_item(state.menu_offset)
+                state.menu_selection = 0
                 return state.prev_state
 
     kick_offsets(state.option_offset, dt)
 
     if state.prev_state != "main_menu":
-        screen.blit(game_surface, (0, 0))
 
         # this is a dimmed version of the last frame in the game
-        overlay = pygame.Surface((game_width, HEIGHT), pygame.SRCALPHA)
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
         screen.blit(overlay, (0, 0))
 
-    screen.blit(title_font.render("options", True, WHITE), (game_width // 4, 120))
+    screen.blit(title_font.render("options", True, WHITE), (WIDTH // 4, 120))
 
     for i, label in enumerate(labels):
         color = SELECTED if state.option_selection == i else WHITE
@@ -432,6 +435,7 @@ def pause_menu(events, dt):
                     state.prev_state = "pause_menu"
                     return "options"
                 elif state.menu_selection == 2:
+                    state.menu_selection = 0
                     return "main_menu"
 
             elif event.key == pygame.K_ESCAPE:
@@ -440,9 +444,8 @@ def pause_menu(events, dt):
 
     kick_offsets(state.menu_offset, dt)
 
-    screen.blit(game_surface, (0, 0))
 
-    overlay = pygame.Surface((game_width, HEIGHT), pygame.SRCALPHA)
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 180))
     screen.blit(overlay, (0, 0))
 

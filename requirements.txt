@@ -1,2 +1,4 @@
 discord-rpc 
 pygame
+PygameShader==1.0.11
+numpy<2

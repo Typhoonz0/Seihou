@@ -1,123 +1,141 @@
-"""seihou game proto"""
-
-import pygame,os
+import pygame, os, PygameShader
 
 pygame.init()
+
 WIDTH, HEIGHT = 1000, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
-x = 300
-y = 400
-y_speed = 0
-on_ground = True
-frame = 0
+class Player:
+    def __init__(self, x):
+        self.x = x # where does it spawn initially
+        self.y = 400
+        self.vy = 0
+        self.ground = True
+        self.frame = 0
+        self.state = "idle"
+        self.face = "east"
+        self.attack = 0
 
 class State:
     def __init__(self):
-        self.name = "main_menu"
-
-        self.menu_selection = 0
-        self.menu_offset = [0, 0, 0, 0, 0]
-        self.pause_menu_selection = 0
-        self.pause_menu_offset = [0, 0, 0, 0, 0]
-
-        self.option_selection = 0
-        self.option_offset = [0, 0, 0, 0, 0, 0]
-
-        self.diff_selection = 0
-        self.diff_scroll = 0.0
-        self.diff_name = "easy"
-        self.char_scroll = 0.0
-        self.char_offset = [0, 0]
-        self.char_entered = False
-        self.char_selection = 0
-        self.prev_state = "pause_menu" 
-        self.track_playing = MUSIC["main_menu"]
-        self.music_state = MUSIC["main_menu"]
-
-        self.state = "idle"
-        self.facing = "east"
+        self.name = "game"
         self.anims = {}
-
-    def go(self, next_state):
-        self.name = next_state
+        self.gamemode = "pvp"
 
 state = State()
 
+p1 = Player(300)
+p2 = Player(500)
+cam_x = 0
+
 base = r"C:\Users\Liam\Documents\GitHub\Seihou\assets\pixel_art_sprite_street_fighter\animations"
 
-def load(path):
-    imgs = []
-    for f in sorted(os.listdir(path)):
-        imgs.append(pygame.image.load(path + "\\" + f))
-    return imgs
+bg = pygame.image.load(r"C:\Users\Liam\Documents\GitHub\Seihou\assets\img\Untitled.png").convert()
+bg = pygame.transform.scale(bg, (2000, 720))
 
-names = ["idle", "walk", "jump", "kick", "punch"]
-dirs = ["east", "west"]
+def load(path):
+    a = []
+    for f in sorted(os.listdir(path)):
+        a.append(pygame.image.load(path + "\\" + f))
+    return a
+
+names = ["idle","walk","jump","kick","punch","hurt","fall"]
+dirs = ["east","west"]
 
 for n in names:
     state.anims[n] = {}
     for d in dirs:
-        state.anims[n][d] = load(base + "\\" + n + "\\" + d) # TODO: make it work on not windows
+        state.anims[n][d] = load(base + "\\" + n + "\\" + d)
+
+def update(p, left, right, up, punch, kick):
+    move = 0
+
+    if left:
+        move = -5
+        p.face = "west"
+    if right:
+        move = 5
+        p.face = "east"
+    if up and p.ground:
+        p.vy = -12
+        p.ground = False
+        p.state = "jump"
+    if punch:
+        p.state = "punch"
+        p.frame = 0
+    if kick:
+        p.state = "kick"
+        p.frame = 0
+    p.x += move
+    # make sure the player doesnt go off screen
+    if p.x < 0:
+        p.x = 0
+    if p.x > WIDTH - 60:
+        p.x = WIDTH - 60
+
+    p.y += p.vy
+    p.vy += 0.5 # gravity
+
+    if p.y >= 400: 
+        # make sure we dont sink into floor
+        p.y = 400
+        p.vy = 0
+        p.ground = True
+
+    if not p.ground:
+        p.state = "jump"
+    else:
+        if move != 0:
+            if p.state not in ("kick","punch"):
+                p.state = "walk"
+        else:
+            if p.state not in ("kick","punch"):
+                p.state = "idle"
+
+def draw(p, p2=False):
+    anim = state.anims[p.state][p.face]
+
+    p.frame += 0.2
+    if p.frame >= len(anim):
+        p.frame = 0
+        if p.state in ("kick","punch"):
+            p.state = "idle"
+
+    img = anim[int(p.frame)]
+    img = pygame.transform.scale_by(img, 3)
+
+    if p2:
+        # making p2 green with hueshift
+        PygameShader.hsl_effect(img, 0.3)
+
+    screen.blit(img, (p.x - cam_x, p.y))
 
 running = True
 while running:
+    dt = clock.tick(60) / 1000
+
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
             running = False
 
     keys = pygame.key.get_pressed() # using get_pressed() instead of get_event cause we need to keep going left/right when held
-    move = 0
 
-    if keys[pygame.K_a]:
-        move = -5
-        state.facing = "west"
-    if keys[pygame.K_d]:
-        move = 5
-        state.facing = "east"
-    if keys[pygame.K_w] and on_ground:
-        y_speed = -12
-        on_ground = False
-        state.state = "jump"
-    if keys[pygame.K_j]:
-        state.state = "punch"
-        frame = 0
-    elif keys[pygame.K_k]:
-        state.state = "kick"
-        frame = 0
+    update(p1, keys[pygame.K_a], keys[pygame.K_d], keys[pygame.K_w], keys[pygame.K_t], keys[pygame.K_y])
 
-    x+= move
-    y +=y_speed
-    y_speed += 0.5
+    if state.gamemode == "pvp":
+        update(p2, keys[pygame.K_LEFT], keys[pygame.K_RIGHT], keys[pygame.K_UP], keys[pygame.K_o], keys[pygame.K_p])
 
-    if y >= 400:
-        y = 400
-        y_speed = 0
-        on_ground = True
+    cam_x += (p1.x - WIDTH//2 - cam_x) * 0.1
+    cam_x = max(0, min(cam_x, bg.get_width() - WIDTH))
 
-    if not on_ground:
-            state.state = "jump"
-    else:
-        if move != 0:
-            if state.state != "kick" and state.state != "punch":
-                state.state = "walk"
-        else:
-            if state.state != "kick" and state.state != "punch":
-                state.state ="idle"
+    screen.fill((67,67,67))
+    screen.blit(bg, (-cam_x, 0))
 
-    anim = state.anims[state.state][state.facing]
-    frame += 0.2
-    if frame >= len(anim):
-        frame = 0
-        if state.state == "kick" or state.state == "punch":
-            state.state = "idle"
+    draw(p1)
+    if state.gamemode == "pvp":
+        draw(p2, p2=True)
 
-    img = anim[int(frame)]
-
-    screen.fill((67, 67, 67))
-    screen.blit(img, (x, y))
     pygame.display.flip()
-    clock.tick()
 
 pygame.quit()
