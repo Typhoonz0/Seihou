@@ -155,7 +155,7 @@ def move_menu_item(offsets, value=-80):
 
 
 def main_menu(events, dt):
-    menu_labels = ["vs com", "vs player", "high scores", "options", "quit"]
+    menu_labels = ["vs com (soon)", "vs player", "high scores", "options", "quit"]
     state.music_state = "main_menu"
     
     for event in events:
@@ -171,10 +171,12 @@ def main_menu(events, dt):
             elif event.key == pygame.K_RETURN:
                 play_sound_fx(confirm_sound)
                 if state.menu_selection == 0:
-                    move_menu_item(state.diff_scroll)
-                    state.actual_prev_state = "main_menu"
-                    state.diff_scroll = -120
-                    return "difficulty_select"
+                    # probs wont get round to vs com anyways
+                    pass
+                    #move_menu_item(state.diff_scroll)
+                    #tate.actual_prev_state = "main_menu"
+                    #state.diff_scroll = -120
+                    #return "difficulty_select"
                 elif state.menu_selection == 1:
                     move_menu_item(state.option_offset)
                     state.char_scroll = -120
