@@ -7,3 +7,4 @@
 04/05 - added some sprites and a very simple prototype
 04/05 - continued prototype, refined menus to fit my new idea more
 05/05 - put my game prototype in with the menus as well as adding a lives/win/lose state to make a complete game 
+05/05 - added type annotations to EVERYTHING as well as docstrings to functions to explain this mess 
