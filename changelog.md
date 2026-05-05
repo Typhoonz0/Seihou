@@ -6,3 +6,4 @@
 26/04 - added a game screen and a pause menu!
 04/05 - added some sprites and a very simple prototype
 04/05 - continued prototype, refined menus to fit my new idea more
+05/05 - put my game prototype in with the menus as well as adding a lives/win/lose state to make a complete game 
