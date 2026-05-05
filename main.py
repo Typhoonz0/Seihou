@@ -6,9 +6,10 @@
 """
 
 try:
-    import pygame, sys, json, discordrpc, os, PygameShader
+    import pygame, sys, json, discordrpc, os, PygameShader, random
 except (ModuleNotFoundError, ImportError) as e:
     print(f"couldn't start game because {e}")
+    exit()
 
 DIFFICULTY = [
     {"name": "easy", "color": (0, 255, 0), "desc": "never played a fighter"},
@@ -18,8 +19,8 @@ DIFFICULTY = [
 ]
 
 CHARS = [
-    {"name": "x", "color": (255, 0, 255), "class": "human", "desc": "more stable"},
-    {"name": "y", "color": (0, 255, 255), "class": "demon", "desc": "more powerful"},
+    {"name": "x", "color": (255, 0, 0), "class": "human", "desc": "regular guy"},
+    {"name": "y", "color": (0, 255, 0), "class": "alien", "desc": "green guy"},
 ]
 
 WHITE = (255, 255, 255)
@@ -50,10 +51,10 @@ def save_file(f, data):
 
 config = load_file("saves/config.json")
 
-if config["discordrpc"]:
+if config["discordrpc"]: 
     try:
         rpc = discordrpc.RPC(app_id=1497206637994315827)
-        rpc.set_activity(state="testing my game", details="ezez")
+        rpc.set_activity(state="fighting noobs", details="ezez")
     except:
         pass
 
@@ -79,7 +80,7 @@ music_playing = False
 
 MUSIC = {
     "main_menu": "Midnight Siege.mp3",
-    "stage_1_1": "Revolutions.mp3"
+    "stage1": "Revolutions.mp3"
 }
 
 class Player:
@@ -95,12 +96,13 @@ class Player:
         self.hp = 100
         self.width = 60
         self.height = 120
+        self.dead = False
         self.attacking = False
         self.was_hit = False
         self.hit_registered = False
         self.combo_hits = 0
         self.knocked = False
-        
+        self.char = "x"
         # these are all in frames
         self.knock_timer = 0
         self.attack_timer = 0
@@ -202,7 +204,7 @@ def move_menu_item(offsets, value=-80):
         offsets = value
 
 def main_menu(events, dt):
-    menu_labels = ["vs com (soon)", "vs player", "high scores", "options", "quit"]
+    menu_labels = ["vs ai", "vs player", "high scores", "options", "quit"]
     state.music_state = "main_menu"
     
     for event in events:
@@ -218,13 +220,13 @@ def main_menu(events, dt):
             elif event.key == pygame.K_RETURN:
                 play_sound_fx(confirm_sound)
                 if state.menu_selection == 0:
-                    # probs wont get round to vs com anyways
-                    pass
-                    #move_menu_item(state.diff_scroll)
-                    #tate.actual_prev_state = "main_menu"
-                    #state.diff_scroll = -120
-                    #return "difficulty_select"
+                    state.gamemode = "pve"
+                    move_menu_item(state.diff_scroll)
+                    state.actual_prev_state = "main_menu"
+                    state.diff_scroll = -120
+                    return "difficulty_select"
                 elif state.menu_selection == 1:
+                    state.gamemode = "pvp"
                     move_menu_item(state.option_offset)
                     state.char_scroll = -120
                     state.actual_prev_state = "main_menu"
@@ -311,6 +313,11 @@ def char_select(events, dt):
                 play_sound_fx(click_sound)
                 state.char_selection += 1
             elif event.key == pygame.K_RETURN:
+                if state.char_selection == 0:
+                    state.char = "x"
+                else:
+                    state.char = "y"
+
                 play_sound_fx(confirm_sound)
                 return "game"
             elif event.key == pygame.K_ESCAPE:
@@ -324,6 +331,7 @@ def char_select(events, dt):
     state.char_scroll += (state.char_selection * WIDTH - state.char_scroll) * (1 - pow(0.001, dt * 2))
     kick_offsets(state.char_offset, dt)
     screen.blit(title_font.render("select character", True, WHITE), (WIDTH // 4, 120))
+    screen.blit(main_font.render("player 2 will get the other character", True, WHITE), (WIDTH // 4, 200))
     screen.blit(small_font.render(f"difficulty: {state.diff_name}", True, WHITE), (WIDTH // 4, HEIGHT - 60))
 
     cy = HEIGHT // 2
@@ -337,9 +345,9 @@ def char_select(events, dt):
         box_y = cy - box_h // 3
         pygame.draw.rect(screen, color, pygame.Rect(box_x, box_y, box_w, box_h), 2)
 
-        name_s  = main_font.render(c["name"],  True, color)
+        name_s = main_font.render(c["name"],  True, color)
         class_s = small_font.render(c["class"], True, (200, 200, 200))
-        desc_s  = small_font.render(c["desc"],  True, (200, 200, 200))
+        desc_s = small_font.render(c["desc"],  True, (200, 200, 200))
 
         text_x = x + WIDTH // 2 - 60
         screen.blit(name_s, (text_x - name_s.get_width(),  cy - 50))
@@ -451,6 +459,38 @@ def high_scores(events, dt):
 
     return "high_scores"
 
+def ai_update(ai, enemy):
+    # very basic ai 
+    move_left = False
+    move_right = False
+    up = False
+    punch = False
+    kick = False
+    dx = enemy.x - ai.x
+
+    if abs(dx) > 80: # move toward player
+        if dx < 0:
+            move_left = True
+        else:
+            move_right = True
+
+    if state.diff_name == "easy" and random.random() < 0.8: # to make it easier, make ai wait for most of the frames
+        return False, False, False, False, False
+    if state.diff_name == "medium" and random.random() < 0.4:
+        return False, False, False, False, False
+
+    # attack if close enough
+    if abs(dx) < 90 and ai.attack_timer <= 0 and not ai.attacking:
+        if random.random() < 0.6:
+            punch = True
+        else:
+            kick = True
+
+    if ai.ground and random.random() < 0.01: # occasional jump
+        up = True
+
+    return move_left, move_right, up, punch, kick
+
 def get_rect(p):
     return pygame.Rect(p.x, p.y, p.width, p.height)
 
@@ -464,16 +504,21 @@ def get_hitbox(p):
     else:
         return pygame.Rect(p.x - 40, p.y + 20, 40, 40)
 
-def reset_round(winner, loser):
+def round_has_ended(winner):
+    # this was originally in reset_round() but since it was called the wrong amount of times,
+    # it meant that the winner of the first match will have 1 extra round win forever
+
     global who_won_text
+
     winner.wins += 1
+
     if winner.wins >= config["lives"]:
         state.gameover = True
-        if winner == p1:
-            who_won_text = "player 1 wins!!1!1"
-        else:
-            who_won_text = "player 2 wins!1!!!"
-        
+        who_won_text = "player 1 wins!!1!1" if winner == p1 else "player 2 wins!1!!!"
+    else:
+        reset_round()
+
+def reset_round():
     p1.x, p1.y = 300, 400
     p2.x, p2.y = 500, 400
 
@@ -494,6 +539,16 @@ def reset_round(winner, loser):
         p.invuln = 0
         p.post_invuln = 0
         p.combo_timer = 0
+        p.dead = False
+
+def reset_match():
+    p1.wins = 0
+    p2.wins = 0
+
+    state.gameover = False
+    who_won_text = None
+
+    reset_round()
 
 def game_over(events, dt):
     menu_labels = ["rematch", "main menu"]
@@ -517,7 +572,7 @@ def game_over(events, dt):
                     p1.wins = 0
                     p2.wins = 0
                     state.gameover = False
-                    reset_round(p1, p2)
+                    reset_match()
                     return "game"
 
                 elif state.menu_selection == 1:
@@ -577,11 +632,15 @@ def do_combat(a, b):
             a.frame = 0
     
     # if one player is dead
-    if p1.hp <= 0:
-        reset_round(p2, p1)
-
-    if p2.hp <= 0:
-        reset_round(p1, p2)
+    if p1.hp <= 0 and not p1.knocked:
+        p1.knocked = True
+        p1.dead = True
+        p1.knock_timer = 10
+        print(p1.knock_timer)
+    if p2.hp <= 0 and not p2.knocked:
+        p2.knocked = True
+        p2.dead = True
+        p2.knock_timer = 10
 
 def update(p, left, right, up, punch, kick):
     move = 0
@@ -693,12 +752,12 @@ def temphpbar(p, x, y):
     screen.blit(w1, (50, 20))
     screen.blit(w2, (750, 20))
 
+
 def draw_player(p, p2=False):
     anim = state.anims[p.state][p.face]
     p.frame += 0.2
 
-    if p.state == "fall":
-        # play falling only once then switch to lying
+    if p.state == "fall": # play falling only once then switch to lying
         if p.frame >= len(anim):
             p.frame = len(anim) - 1
             p.state = "lying"
@@ -706,21 +765,32 @@ def draw_player(p, p2=False):
     else:
         if p.frame >= len(anim):
             p.frame = 0
-            if p.state in ("kick","punch"):
+            if p.state in ("kick", "punch"):
                 p.state = "idle"
 
     img = anim[int(p.frame)]
     img = pygame.transform.scale_by(img, 4)
 
-    if p2:
-        # making p2 green with hueshift
+    # we'll just do a colour switch
+    if state.char == "y" and not p2:
+        # making us green with hueshift
+        PygameShader.hsl_effect(img, 0.3)
+
+    elif state.char == "x" and p2:
         PygameShader.hsl_effect(img, 0.3)
 
     screen.blit(img, (p.x - cam_x, p.y))
 
+def between_death():
+    # handles the state where player is dead, must be animated for a short time then reset round
+    if p1.dead:
+        round_has_ended(p2) 
+    if p2.dead:
+        round_has_ended(p1) 
+            
 def game(events, dt):
     global cam_x
-
+    state.music_state = "stage1"
     for e in events:
         if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
             return "pause_menu"
@@ -730,8 +800,16 @@ def game(events, dt):
     if not state.gameover:
         update(p1, keys[pygame.K_a], keys[pygame.K_d], keys[pygame.K_w], keys[pygame.K_t], keys[pygame.K_y])
 
-        if state.gamemode == "pvp":
-            update(p2, keys[pygame.K_LEFT], keys[pygame.K_RIGHT], keys[pygame.K_UP], keys[pygame.K_o], keys[pygame.K_p])
+        if state.gamemode == "pve":
+            l, r, u, p, k = ai_update(p2, p1) # ai inputs
+            update(p2, l, r, u, p, k)
+        else:
+            update(p2,
+                keys[pygame.K_LEFT],
+                keys[pygame.K_RIGHT],
+                keys[pygame.K_UP],
+                keys[pygame.K_o],
+                keys[pygame.K_p])
 
     do_combat(p1, p2)
     do_combat(p2, p1)
@@ -744,12 +822,11 @@ def game(events, dt):
 
     temphpbar(p1, 50, 50)
     temphpbar(p2, 750, 50)
-
+    between_death()
     if state.gameover:
         return "game_over"
     draw_player(p1)
-    if state.gamemode == "pvp":
-        draw_player(p2, p2=True)
+    draw_player(p2, p2=True)
         
     return "game"
 
@@ -778,6 +855,7 @@ def pause_menu(events, dt):
                     state.prev_state = "pause_menu"
                     return "options"
                 elif state.menu_selection == 2:
+                    reset_match()
                     state.menu_selection = 0
                     move_menu_item(state.menu_offset)
                     return "main_menu"
@@ -816,7 +894,7 @@ SCREENS = {
 }
 
 while True:
-    dt = clock.tick(100) / 1000
+    dt = clock.tick(60) / 1000
 
     events = pygame.event.get()
 
