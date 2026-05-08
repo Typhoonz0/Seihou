@@ -9,7 +9,7 @@ Typhoonz0 | GitHub
 
 try:
     import pygame, sys, json, discordrpc, os, PygameShader, random
-    from typing import Optional # Technically we cause just write "type | None" but this is cleaner 
+    from typing import Optional # Technically we could just write "type | None" but this is cleaner 
 except (ModuleNotFoundError, ImportError) as e:
     print(f"couldn't start game because {e}")
     exit()
@@ -258,11 +258,7 @@ def reset_match() -> None:
     reset_round()
     
 def main_menu(events: list[pygame.event.Event], dt: float) -> str:
-    """Render and handle inputs for the main menu screen.
-
-    Note:
-        Pressing escape moves selection to quit and pressing it again exits.
-    """
+    """Render and handle inputs for the main menu screen."""
     menu_labels: list[str] = ["vs ai", "vs player", "high scores", "options", "quit"]
     state.music_state = "main_menu"
     
@@ -567,16 +563,17 @@ def ai_update(ai: Player, enemy: Player) -> tuple[bool, bool, bool, bool, bool]:
             move_right = True
 
     if state.diff_name == "easy": # ai doesnt move in easy mode
-        return False, False, False, False, False
-    elif state.diff_name == "normal" and random.random() < 0.4: # to make it easier, make ai wait for most of the frames
-        return False, False, False, False, False
+        return False, False, False, False, False           
 
     # attack if close enough
     if abs(dx) < 90 and ai.attack_timer <= 0 and not ai.attacking:
-        if random.random() < 0.6:
-            punch = True
-        else:
-            kick = True
+        handicap_chance = random.random()
+        # ai chooses to randomly attack, harder the difficulty, the more lilely it happens
+        if (state.diff_name == "normal" and handicap_chance > 0.98) or (state.diff_name == "hard" and handicap_chance > 0.97):
+            if random.random() < 0.6:
+                punch = True
+            else:
+                kick = True
 
     if ai.ground and random.random() < 0.01: # occasional jump
         up = True
@@ -598,7 +595,6 @@ def get_hitbox(p: Player) -> Optional[pygame.Rect]:
         return pygame.Rect(p.x - 40, p.y + 20, 40, 40)
 
 def round_has_ended(winner: Player) -> None:
-    # 
     """Give a point to the winner and either reset or end the match.
 
     Note:
@@ -675,8 +671,7 @@ def do_combat(a: Player, b: Player) -> None:
 
     Note:
         Player a is the attacker and player b is the one being attacked.
-        Three hits in a short time span triggers a knockdown with temporary invulnerability.
-        Death checks for both players run here.
+        5 hits in a short time span triggers a knockdown with temporary invulnerability.
     """
     b.combo_timer = 0
     atk: Optional[pygame.Rect] = get_hitbox(a)
@@ -684,13 +679,13 @@ def do_combat(a: Player, b: Player) -> None:
     if atk and not a.hit_registered: # make sure u cant just spam hits over and over
         # if hitboxes are touching and defending player hasnt been attacked very recently
         if atk.colliderect(get_rect(b)) and b.invuln <= 0 and b.post_invuln <= 0 and not b.was_hit:
-            b.hp -= 40
+            b.hp -= 5
 
             b.hitstun = 20
             b.state = "hurt"
             b.combo_hits += 1
 
-            if b.combo_hits >= 3:
+            if b.combo_hits >= 5:
                 b.knocked = True
                 b.knock_timer = 120
                 b.invuln = 120
@@ -718,11 +713,7 @@ def do_combat(a: Player, b: Player) -> None:
         p2.knock_timer = 10
 
 def update(p: Player, left: bool, right: bool, up: bool, punch: bool, kick: bool) -> None:
-    """Updates a player's physics, state, and combat times for this frame.
-
-    Note:
-        Returns early if the player is knocked down or stunned cause they can't move.
-    """
+    """Updates a player's physics, state, and combat times for this frame."""
 
     move: int = 0
     # invulnerability countdown
