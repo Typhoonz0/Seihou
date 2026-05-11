@@ -15,7 +15,7 @@ try:
     import pygame, sys, json, discordrpc, os, PygameShader, random # actually required modules to get the game working
 except (ModuleNotFoundError, ImportError) as e:
     print(f"couldn't start game because {e}")
-    print(f"you should read the manual")
+    print(f"you should open readme.md")
     exit()
 
 DIFFICULTY: list[dict[str, object]] = [
