@@ -28,6 +28,7 @@
 
 <h2>Setup and Download</h2>
 	<p><b>I recommend Python 3.11 as you will need extra tooling to compile Pygame from source on the current version of Python.</b></p>
+	
 ```bash
 	git clone https://github.com/Typhoonz0/Seihou.git 
 	cd Seihou 
