@@ -9,3 +9,4 @@
 05/05 - put my game prototype in with the menus as well as adding a lives/win/lose state to make a complete game 
 05/05 - added type annotations to EVERYTHING as well as docstrings to functions to explain this mess 
 08/05 - Bugs/typos fixed
+11/05 - Adding object oriented priciples and wrote a simple manual

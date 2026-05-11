@@ -7,11 +7,15 @@
 Typhoonz0 | GitHub
 """
 
+from __future__ import annotations # python is dumb so you cant annotate a method to return its own class without this
+from typing import Optional # technically we could just write "type | None" but "Optional[T]" is more clean
+from abc import ABC, abstractmethod # getting good grades
+
 try:
-    import pygame, sys, json, discordrpc, os, PygameShader, random
-    from typing import Optional # Technically we could just write "type | None" but this is cleaner 
+    import pygame, sys, json, discordrpc, os, PygameShader, random # actually required modules to get the game working
 except (ModuleNotFoundError, ImportError) as e:
     print(f"couldn't start game because {e}")
+    print(f"you should read the manual")
     exit()
 
 DIFFICULTY: list[dict[str, object]] = [
@@ -54,7 +58,7 @@ def load_file(f: str) -> dict:
 def save_file(f: str, data: dict) -> None:
     with open(f, "w") as f:
         json.dump(data, f)
-
+    
 config: dict[str, object] = load_file("saves/config.json")
 
 if config["discordrpc"]: 
@@ -99,6 +103,41 @@ MUSIC: dict[str, str] = {
     "stage1": "Revolutions.mp3"
 }
 
+# the only reason why this is outside of the State object blow is to demonstrate inheritance
+class Offsets(ABC):
+    @abstractmethod # decorator to demonstrate the concept of abstraction: you cant make a Offsets class it can only be inherited from
+    def __init__(self) -> None:
+        self.menu_selection: int = 0
+        self.menu_offset: list[int] = [0, 0, 0, 0, 0]
+        self.pause_menu_selection: int = 0
+        self.pause_menu_offset: list[int] = [0, 0, 0, 0, 0]
+
+        self.option_selection: int = 0
+        self.option_offset: list[int] = [0, 0, 0, 0, 0, 0]
+
+        self.diff_selection: int = 0
+        self.diff_scroll: float = 0.0
+        self.diff_name: str = "n/a"
+        self.char_scroll: float = 0.0
+        self.char_offset: list[int] = [0, 0]
+        self.char_entered: bool = False
+        self.char_selection: int = 0
+
+class State(Offsets):
+    def __init__(self) -> None:
+        super().__init__() # we need all the variables in the Offsets class above to be initialised
+        self.name: str = "main_menu"
+
+        self.prev_state: str = "pause_menu" 
+        self.actual_prev_state: str = "main_menu"
+        self.track_playing: str = MUSIC["main_menu"]
+        self.music_state: str = MUSIC["main_menu"]
+
+        self.anims: dict[str, dict[str, list[pygame.Surface]]] = {}
+        self.gamemode: str = "pvp"
+        self.gameover: bool = False
+
+
 class Player:
     def __init__(self, x: int) -> None:
         self.wins: int = 0
@@ -127,33 +166,31 @@ class Player:
         self.post_invuln: int = 0 # invul after getting stunned/knocked
         self.combo_timer: int = 0
 
-class State:
-    def __init__(self) -> None:
-        self.name: str = "main_menu"
+    def get_rect(self: Player) -> pygame.Rect:
+        """Returns a hitbox rect that represents the players actual body."""
+        return pygame.Rect(self.x, self.y, self.width, self.height)
 
-        self.menu_selection: int = 0
-        self.menu_offset: list[int] = [0, 0, 0, 0, 0]
-        self.pause_menu_selection: int = 0
-        self.pause_menu_offset: list[int] = [0, 0, 0, 0, 0]
+    def get_hitbox(self: Player) -> Optional[pygame.Rect]:
+        """Returns a hitbox that is bigger because the player has their foot or hand out."""
+        if not self.attacking:
+            return None
 
-        self.option_selection: int = 0
-        self.option_offset: list[int] = [0, 0, 0, 0, 0, 0]
+        if self.face == "east":
+            return pygame.Rect(self.x + self.width, self.y + 20, 40, 40)
+        else:
+            return pygame.Rect(self.x - 40, self.y + 20, 40, 40)
 
-        self.diff_selection: int = 0
-        self.diff_scroll: float = 0.0
-        self.diff_name: str = "n/a"
-        self.char_scroll: float = 0.0
-        self.char_offset: list[int] = [0, 0]
-        self.char_entered: bool = False
-        self.char_selection: int = 0
-        self.prev_state: str = "pause_menu" 
-        self.actual_prev_state: str = "main_menu"
-        self.track_playing: str = MUSIC["main_menu"]
-        self.music_state: str = MUSIC["main_menu"]
+    def get_attack_damage(self) -> int:
+        """This function only exists to demonstrate Polymorphism, same below in the other two classes."""
+        return 5
 
-        self.anims: dict[str, dict[str, list[pygame.Surface]]] = {}
-        self.gamemode: str = "pvp"
-        self.gameover: bool = False
+class HumanPlayer(Player):
+    def get_attack_damage(self) -> int:
+        return 5
+
+class AlienPlayer(Player):
+    def get_attack_damage(self) -> int:
+        return 5.1
 
 state: State = State()
 
@@ -161,9 +198,9 @@ p1: Player = Player(300)
 p2: Player = Player(500)
 cam_x: float = 0
 who_won_text: Optional[str] = None
-base: str = r"C:\Users\Liam\Documents\GitHub\Seihou\assets\pixel_art_sprite_street_fighter\animations"
+base: str = r"assets\pixel_art_sprite_street_fighter\animations"
 
-bg: pygame.Surface = pygame.image.load(r"C:\Users\Liam\Documents\GitHub\Seihou\assets\img\Untitled.png").convert()
+bg: pygame.Surface = pygame.image.load(r"assets\img\Untitled.png").convert()
 bg = pygame.transform.scale(bg, (1400, 720))
 
 def load(path: str) -> list[pygame.Surface]:
@@ -580,20 +617,6 @@ def ai_update(ai: Player, enemy: Player) -> tuple[bool, bool, bool, bool, bool]:
 
     return move_left, move_right, up, punch, kick
 
-def get_rect(p: Player) -> pygame.Rect:
-    """Returns a hitbox rect that represents the players actual body."""
-    return pygame.Rect(p.x, p.y, p.width, p.height)
-
-def get_hitbox(p: Player) -> Optional[pygame.Rect]:
-    """Returns a hitbox that is bigger because the player has their foot or hand out."""
-    if not p.attacking:
-        return None
-
-    if p.face == "east":
-        return pygame.Rect(p.x + p.width, p.y + 20, 40, 40)
-    else:
-        return pygame.Rect(p.x - 40, p.y + 20, 40, 40)
-
 def round_has_ended(winner: Player) -> None:
     """Give a point to the winner and either reset or end the match.
 
@@ -674,12 +697,12 @@ def do_combat(a: Player, b: Player) -> None:
         5 hits in a short time span triggers a knockdown with temporary invulnerability.
     """
     b.combo_timer = 0
-    atk: Optional[pygame.Rect] = get_hitbox(a)
+    atk: Optional[pygame.Rect] = a.get_hitbox()
 
     if atk and not a.hit_registered: # make sure u cant just spam hits over and over
         # if hitboxes are touching and defending player hasnt been attacked very recently
-        if atk.colliderect(get_rect(b)) and b.invuln <= 0 and b.post_invuln <= 0 and not b.was_hit:
-            b.hp -= 5
+        if atk.colliderect(b.get_rect()) and b.invuln <= 0 and b.post_invuln <= 0 and not b.was_hit:
+            b.hp -= a.get_attack_damage() 
 
             b.hitstun = 20
             b.state = "hurt"
