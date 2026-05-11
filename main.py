@@ -7,7 +7,7 @@
 Typhoonz0 | GitHub
 """
 
-from __future__ import annotations # python is dumb so you cant annotate a method to return its own class without this
+from __future__ import annotations # without this, i couldn't use the Player type as a type inside it's own method, see line 169
 from typing import Optional # technically we could just write "type | None" but "Optional[T]" is more clean
 from abc import ABC, abstractmethod # getting good grades
 
@@ -15,7 +15,7 @@ try:
     import pygame, sys, json, discordrpc, os, PygameShader, random # actually required modules to get the game working
 except (ModuleNotFoundError, ImportError) as e:
     print(f"couldn't start game because {e}")
-    print(f"you should open readme.md")
+    print(f"you should read the manual")
     exit()
 
 DIFFICULTY: list[dict[str, object]] = [
@@ -103,7 +103,7 @@ MUSIC: dict[str, str] = {
     "stage1": "Revolutions.mp3"
 }
 
-# the only reason why this is outside of the State object blow is to demonstrate inheritance
+# the only reason why this is outside of the State object is to demonstrate inheritance
 class Offsets(ABC):
     @abstractmethod # decorator to demonstrate the concept of abstraction: you cant make a Offsets class it can only be inherited from
     def __init__(self) -> None:
@@ -189,7 +189,7 @@ class HumanPlayer(Player):
         return 5
 
 class AlienPlayer(Player):
-    def get_attack_damage(self) -> int:
+    def get_attack_damage(self) -> float:
         return 5.1
 
 state: State = State()
@@ -577,10 +577,11 @@ def high_scores(events: list[pygame.event.Event], dt: float) -> str:
         screen.blit(small_font.render(f"No highscores", True, WHITE), (WIDTH // 4, 200))
 
     for event in events:
-        if event.key == pygame.K_ESCAPE:
-            play_sound_fx(back_sound)
-            move_menu_item(state.menu_offset)
-            return "main_menu"
+        if event.type == pygame.KEYDOWN: 
+            if event.key == pygame.K_ESCAPE:
+                play_sound_fx(back_sound)
+                move_menu_item(state.menu_offset)
+                return "main_menu"
 
     return "high_scores"
 
@@ -605,7 +606,7 @@ def ai_update(ai: Player, enemy: Player) -> tuple[bool, bool, bool, bool, bool]:
     # attack if close enough
     if abs(dx) < 90 and ai.attack_timer <= 0 and not ai.attacking:
         handicap_chance = random.random()
-        # ai chooses to randomly attack, harder the difficulty, the more lilely it happens
+        # ai chooses to randomly attack, harder the difficulty, the more likely it happens
         if (state.diff_name == "normal" and handicap_chance > 0.98) or (state.diff_name == "hard" and handicap_chance > 0.97):
             if random.random() < 0.6:
                 punch = True
@@ -768,6 +769,7 @@ def update(p: Player, left: bool, right: bool, up: bool, punch: bool, kick: bool
     if p.post_invuln > 0:
         p.post_invuln -= 1
 
+    # move and p.vy move the player that amount of pixels 
     if left:
         move = -5
         p.face = "west"
@@ -775,11 +777,11 @@ def update(p: Player, left: bool, right: bool, up: bool, punch: bool, kick: bool
         move = 5
         p.face = "east"
     if up and p.ground:
-        p.vy = -12
+        p.vy = -12  # -12 is 12 pixels up
         p.ground = False
         p.state = "jump"
 
-    if punch and not p.attacking: #make sure players cant spam
+    if punch and not p.attacking: # make sure players cant spam
         p.state = "punch"
         p.frame = 0
         p.attacking = True
@@ -837,9 +839,7 @@ def update(p: Player, left: bool, right: bool, up: bool, punch: bool, kick: bool
         p.was_hit = False
 
 def draw_hud(p: Player, x: int, y: int) -> None:
-    """Draw the health bar for a player and both players' win counts.
-    TODO: RENDER WINS AS GRAPHICS
-    """
+    """Draw the health bar for a player and both players' win counts. """
     pygame.draw.rect(screen, (255,0,0), (x, y, 200, 20))
     pygame.draw.rect(screen, (0,255,0), (x, y, 200 * (p.hp / 100), 20))
 
@@ -869,7 +869,7 @@ def draw_player(p: Player, p2: bool = False) -> None:
     img: pygame.Surface = anim[int(p.frame)]
     img = pygame.transform.scale_by(img, 4)
 
-    # we'll just do a colour switch
+    # colour switching the other player
     if state.char == "y" and not p2:
         # making us green with hueshift
         PygameShader.hsl_effect(img, 0.3)
