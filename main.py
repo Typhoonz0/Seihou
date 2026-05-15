@@ -18,14 +18,14 @@ except (ModuleNotFoundError, ImportError) as e:
     print(f"you should read the manual")
     exit()
 
-DIFFICULTY: list[dict[str, object]] = [
+DIFFICULTY: list[dict[str, tuple[int, int, int] | str]] = [
     {"name": "easy", "color": (0, 255, 0), "desc": "AI doesn't move"},
     {"name": "normal", "color": (255, 255, 0), "desc": "a simple AI"},
     {"name": "hard", "color": (255, 140, 0), "desc": "you fight often?"},
     {"name": "extreme", "color": (255, 0, 0), "desc": "not fair..."},
 ]
 
-CHARS: list[dict[str, object]] = [
+CHARS: list[dict[str, tuple[int, int, int] | str]] = [
     {"name": "x", "color": (255, 0, 0), "class": "human", "desc": "regular guy"},
     {"name": "y", "color": (0, 255, 0), "class": "alien", "desc": "green guy"},
 ]
@@ -107,8 +107,6 @@ MUSIC: dict[str, str] = {
 class Offsets(ABC):
     @abstractmethod # decorator to demonstrate the concept of abstraction: you cant make a Offsets class it can only be inherited from
     def __init__(self) -> None:
-        # the standalone numbers are the index of the menu e.g. main_menu, vs player would be 1
-        # the lists are the x offsets for each menu item e.g. [-80, ...] would make the first item offset 80 pixels  
         self.menu_selection: int = 0
         self.menu_offset: list[int] = [0, 0, 0, 0, 0]
         self.pause_menu_selection: int = 0
@@ -119,8 +117,8 @@ class Offsets(ABC):
 
         self.diff_selection: int = 0
         self.diff_scroll: float = 0.0
-        self.diff_name: str = "easy"
-        self.char_scroll: float = 0.0 
+        self.diff_name: str = "n/a"
+        self.char_scroll: float = 0.0
         self.char_offset: list[int] = [0, 0]
         self.char_entered: bool = False
         self.char_selection: int = 0
@@ -130,10 +128,10 @@ class State(Offsets):
         super().__init__() # we need all the variables in the Offsets class above to be initialised
         self.name: str = "main_menu"
 
-        self.prev_state: str = "pause_menu" # for in game state to track in the options menu, are we in the pause menu in game or in the main menu?
-        self.actual_prev_state: str = "main_menu" # the one we actually use in the other functions to detect how many menus back to go
-        self.track_playing: str = MUSIC["main_menu"] # whats actually playing right now
-        self.music_state: str = MUSIC["main_menu"] # what should be playing
+        self.prev_state: str = "pause_menu" 
+        self.actual_prev_state: str = "main_menu"
+        self.track_playing: str = MUSIC["main_menu"]
+        self.music_state: str = MUSIC["main_menu"]
 
         self.anims: dict[str, dict[str, list[pygame.Surface]]] = {}
         self.gamemode: str = "pvp"
