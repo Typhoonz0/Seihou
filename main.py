@@ -37,7 +37,6 @@ WIDTH: int
 HEIGHT: int
 WIDTH, HEIGHT = 1000, 720
 WINDOW_W: int = 1280
-FPS: int = 100
 
 pygame.init()
 pygame.mixer.init()
@@ -61,7 +60,10 @@ def save_file(f: str, data: dict) -> None:
     
 config: dict[str, object] = load_file("saves/config.json")
 
+FPS: int = config["FPS"] 
+
 if config["discordrpc"]: 
+    print("If this is taking a while, set discordrpc to false.")
     try:
         rpc: discordrpc.RPC = discordrpc.RPC(app_id=1497206637994315827)
         rpc.set_activity(state="fighting noobs", details="ezez")
@@ -93,8 +95,8 @@ title_font: pygame.font.Font = pygame.font.Font("assets/fonts/smash_hit/Smash Hi
 main_font: pygame.font.Font = pygame.font.Font("assets/fonts/smash_hit/Smash Hit.ttf", 40)
 small_font: pygame.font.Font = pygame.font.Font("assets/fonts/smash_hit/Smash Hit.ttf", 30)
 
-window_bg: pygame.Surface = pygame.transform.scale(pygame.image.load("assets/img/bg.jpg").convert(), (WINDOW_W, HEIGHT))
-screen_bg: pygame.Surface = pygame.transform.scale(pygame.image.load("assets/img/mainbg.jpg").convert(), (WIDTH, HEIGHT))
+window_bg: pygame.Surface = pygame.transform.scale(pygame.image.load("assets/img/window_bg.jpg").convert(), (WINDOW_W, HEIGHT))
+screen_bg: pygame.Surface = pygame.transform.scale(pygame.image.load("assets/img/screen_bg.jpg").convert(), (WIDTH, HEIGHT))
 
 music_playing: bool = False
 
@@ -108,7 +110,7 @@ class Offsets(ABC):
     @abstractmethod # decorator to demonstrate the concept of abstraction: you cant make a Offsets class it can only be inherited from
     def __init__(self) -> None:
         self.menu_selection: int = 0
-        self.menu_offset: list[int] = [0, 0, 0, 0, 0]
+        self.menu_offset: list[int] = [0, 0, 0, 0]
         self.pause_menu_selection: int = 0
         self.pause_menu_offset: list[int] = [0, 0, 0, 0, 0]
 
@@ -200,7 +202,7 @@ cam_x: float = 0
 who_won_text: Optional[str] = None
 base: str = r"assets\pixel_art_sprite_street_fighter\animations"
 
-bg: pygame.Surface = pygame.image.load(r"assets\img\Untitled.png").convert()
+bg: pygame.Surface = pygame.image.load(r"assets\img\stage.png").convert()
 bg = pygame.transform.scale(bg, (1400, 720))
 
 def load(path: str) -> list[pygame.Surface]:
@@ -296,7 +298,7 @@ def reset_match() -> None:
     
 def main_menu(events: list[pygame.event.Event], dt: float) -> str:
     """Render and handle inputs for the main menu screen."""
-    menu_labels: list[str] = ["vs ai", "vs player", "high scores", "options", "quit"]
+    menu_labels: list[str] = ["vs ai", "vs player", "options", "quit"]
     state.music_state = "main_menu"
     
     for event in events:
@@ -305,7 +307,7 @@ def main_menu(events: list[pygame.event.Event], dt: float) -> str:
                 play_sound_fx(click_sound)
                 state.menu_selection -= 1
                 state.menu_offset[state.menu_selection] = -80
-            elif event.key == pygame.K_DOWN and state.menu_selection < 4:
+            elif event.key == pygame.K_DOWN and state.menu_selection < 3:
                 play_sound_fx(click_sound)
                 state.menu_selection += 1
                 state.menu_offset[state.menu_selection] = -80
@@ -324,18 +326,16 @@ def main_menu(events: list[pygame.event.Event], dt: float) -> str:
                     state.actual_prev_state = "main_menu"
                     return "char_select"
                 elif state.menu_selection == 2:
-                    return "high_scores"
-                elif state.menu_selection == 3:
                     move_menu_item(state.option_offset)
                     state.prev_state = "main_menu"
                     return "options"
-                elif state.menu_selection == 4:
+                elif state.menu_selection == 3:
                     return "quit"
             elif event.key == pygame.K_ESCAPE:
                 play_sound_fx(back_sound)
-                if state.menu_selection != 4:
-                    state.menu_selection = 4
-                    state.menu_offset[4] = -80
+                if state.menu_selection != 3:
+                    state.menu_selection = 3
+                    state.menu_offset[3] = -80
                 else:
                     return "quit"
 
@@ -385,7 +385,7 @@ def difficulty_select(events: list[pygame.event.Event], dt: float) -> str:
     screen.blit(title_font.render("select difficulty", True, WHITE), (WIDTH // 4, 120))
 
     cx: int = WIDTH // 2
-    cy: int = HEIGHT // 2
+    cy: int = HEIGHT // 2 
 
     for i, d in enumerate(DIFFICULTY):
         x: float = cx + (i * spacing) - state.diff_scroll
@@ -438,7 +438,7 @@ def char_select(events: list[pygame.event.Event], dt: float) -> str:
         color: tuple[int, int, int] = c["color"]
 
         # loading a box with the sprite inside it
-        # just doing some positioning calculations
+
         box_w: int
         box_h: int
         box_w, box_h = 280, 340
@@ -563,29 +563,9 @@ def options(events: list[pygame.event.Event], dt: float) -> str:
 
     return "options"
 
-def high_scores(events: list[pygame.event.Event], dt: float) -> str:
-    """Renders the high scores screen."""
-    screen.blit(title_font.render("highscores", True, WHITE), (WIDTH // 4, 120))
-
-    try:
-        scores: list = load_file("saves/highscosres.json")
-        j: int = 0
-        for k, v in enumerate(scores):
-            screen.blit(small_font.render(f"{k}: {v}", True, WHITE), (WIDTH // 4, 200 + j))
-            j += 40
-    except FileNotFoundError:
-        screen.blit(small_font.render(f"No highscores", True, WHITE), (WIDTH // 4, 200))
-
-    for event in events:
-        if event.type == pygame.KEYDOWN: 
-            if event.key == pygame.K_ESCAPE:
-                play_sound_fx(back_sound)
-                move_menu_item(state.menu_offset)
-                return "main_menu"
-
-    return "high_scores"
 
 def ai_update(ai: Player, enemy: Player) -> tuple[bool, bool, bool, bool, bool]:
+    """Basic ai that simulates keystrokes for a frame."""
     # very basic ai 
     move_left: bool = False
     move_right: bool = False
@@ -607,13 +587,13 @@ def ai_update(ai: Player, enemy: Player) -> tuple[bool, bool, bool, bool, bool]:
     if abs(dx) < 90 and ai.attack_timer <= 0 and not ai.attacking:
         handicap_chance = random.random()
         # ai chooses to randomly attack, harder the difficulty, the more likely it happens
-        if (state.diff_name == "normal" and handicap_chance > 0.98) or (state.diff_name == "hard" and handicap_chance > 0.97):
+        if (state.diff_name == "normal" and handicap_chance > 0.98) or (state.diff_name == "hard" and handicap_chance > 0.97) or state.diff_name == "extreme":
             if random.random() < 0.6:
                 punch = True
             else:
                 kick = True
 
-    if ai.ground and random.random() < 0.01: # occasional jump
+    if ai.ground and random.random() < 0.02: # occasional jump
         up = True
 
     return move_left, move_right, up, punch, kick
@@ -993,7 +973,6 @@ SCREENS: dict[str, callable] = {
     "pause_menu": pause_menu,
     "difficulty_select": difficulty_select,
     "char_select": char_select,
-    "high_scores": high_scores,
     "game_over": game_over,
     "game": game,
 }
